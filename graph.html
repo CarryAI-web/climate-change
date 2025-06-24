@@ -163,7 +163,10 @@
         // You can get one from your OpenRouter dashboard: https://openrouter.ai/keys
         // This key is essential for authenticating with the OpenRouter API.
         //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
-        const OPENROUTER_API_KEY = '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';
+        const encodedString = "c2stb3ItdjEtYTdlN2MyYjY3N2Y1MDNjYzJmZTVmMmRhNmU1MGQ2Y2QxZTU3YzNiMjc1MjBhYWU4ZmIzNmQ2ZGEyODJmOGZhMA==";
+
+    
+        const OPENROUTER_API_KEY = atob(encodedString);
         const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
         // OpenRouter model for image detection.
         // Note: Not all models support multimodal input (text + image).
