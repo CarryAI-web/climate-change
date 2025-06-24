@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rich Picture: The Urchin Barrens Trophic Cascade</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .flow-arrow {
+            width: 2px;
+            background-color: #FF851B; /* Orange for flow */
+            height: 40px;
+            margin: 0 auto;
+        }
+        .flow-arrow::after {
+            content: ' ';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -6px;
+            border-width: 6px;
+            border-style: solid;
+            border-color: #FF851B transparent transparent transparent;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-300 to-blue-500 min-h-screen text-gray-800 flex items-center justify-center py-12 px-4">
+
+    <div class="bg-white rounded-xl shadow-2xl p-8 max-w-5xl w-full">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-[#0074D9] mb-4">Rich Picture: The Urchin Barrens Trophic Cascade</h1>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto">This visualization illustrates how interconnected ecological factors, exacerbated by climate change, can lead to the dramatic transformation of thriving kelp forests into barren underwater landscapes.</p>
+        </header>
+
+        <div class="flex flex-col items-center space-y-8">
+
+            <!-- Step 1: Climate Stress & Disease -->
+            <div class="relative bg-[#FF4136] text-white p-6 rounded-lg shadow-xl w-full max-w-md text-center border-2 border-red-600">
+                <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#FF4136] px-4 py-1 rounded-full text-sm font-semibold shadow-md">Step 1</div>
+                <div class="text-6xl mb-4">🌡️🦠</div>
+                <h3 class="text-2xl font-bold mb-2">Climate Stress & Disease</h3>
+                <p class="text-sm">Marine heatwaves and environmental changes weaken ecosystems, making them vulnerable to diseases. For example, sea stars, key predators, suffer massive die-offs from sea star wasting disease.</p>
+                <div class="absolute -bottom-8 left-1/2 -translate-x-1/2 flow-arrow"></div>
+            </div>
+
+            <!-- Step 2: Predator Loss -->
+            <div class="relative bg-[#FF851B] text-white p-6 rounded-lg shadow-xl w-full max-w-md text-center border-2 border-orange-600">
+                <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#FF851B] px-4 py-1 rounded-full text-sm font-semibold shadow-md">Step 2</div>
+                <div class="text-6xl mb-4">🦀🦞</div>
+                <h3 class="text-2xl font-bold mb-2">Predator Loss</h3>
+                <p class="text-sm">With the decline of sea stars and other natural predators (like lobsters and California sheephead) due to disease or overfishing, the ecological balance is disrupted.</p>
+                 <div class="absolute -bottom-8 left-1/2 -translate-x-1/2 flow-arrow"></div>
+            </div>
+
+            <!-- Step 3: Urchin Population Boom -->
+            <div class="relative bg-[#800080] text-white p-6 rounded-lg shadow-xl w-full max-w-md text-center border-2 border-purple-600">
+                <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#800080] px-4 py-1 rounded-full text-sm font-semibold shadow-md">Step 3</div>
+                <div class="text-6xl mb-4">💜💜💜</div>
+                <h3 class="text-2xl font-bold mb-2">Urchin Population Boom</h3>
+                <p class="text-sm">Without predators to keep them in check, voracious grazers like purple sea urchins multiply unchecked, forming dense aggregations that consume everything in their path.</p>
+                 <div class="absolute -bottom-8 left-1/2 -translate-x-1/2 flow-arrow"></div>
+            </div>
+
+            <!-- Step 4: Urchin Barren Forms -->
+            <div class="relative bg-gray-700 text-white p-6 rounded-lg shadow-xl w-full max-w-md text-center border-2 border-gray-900">
+                <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-700 px-4 py-1 rounded-full text-sm font-semibold shadow-md">Step 4</div>
+                <div class="text-6xl mb-4">💀🌿</div>
+                <h3 class="text-2xl font-bold mb-2">Urchin Barren Forms</h3>
+                <p class="text-sm">The unchecked urchin populations overgraze the kelp forests, devastating the ecosystem and transforming lush, productive habitats into barren, rocky seafloors, severely impacting biodiversity.</p>
+            </div>
+
+        </div>
+
+        <footer class="text-center mt-12 text-gray-600 text-sm">
+            <p>This rich picture highlights the cascading impacts within marine ecosystems.</p>
+            <p>Understanding these connections is vital for effective conservation and climate action.</p>
+        </footer>
+    </div>
+
+</body>
+</html>
