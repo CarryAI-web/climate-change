@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Food Detector</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <!-- COCO-SSD Model -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light gray background */
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px; /* Max width for video */
+            height: auto;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            background-color: #000;
+            margin-bottom: 1.5rem;
+        }
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+        .message-box {
+            background-color: #fff3cd;
+            color: #664d03;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #ffecb5;
+            margin-top: 1rem;
+            text-align: center;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="container">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">AI Food Detector</h1>
+
+        <div class="video-container">
+            <video id="webcam" autoplay muted playsinline></video>
+            <canvas id="detectionCanvas"></canvas>
+            <div id="loadingMessage" class="absolute inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center text-white text-lg rounded-xl z-20 hidden">
+                Loading AI model...
+            </div>
+            <div id="noCameraMessage" class="absolute inset-0 bg-red-900 bg-opacity-75 flex items-center justify-center text-white text-lg rounded-xl z-20 hidden">
+                <p>Camera access denied or not available. Please allow camera access in your browser settings.</p>
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4 mb-6 w-full justify-center">
+            <button id="startCameraButton" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75">
+                Start Camera
+            </button>
+            <button id="stopCameraButton" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75" disabled>
+                Stop Camera
+            </button>
+        </div>
+
+        <div class="w-full text-center">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-3">Detected Food Items:</h2>
+            <div id="foodList" class="bg-gray-50 p-4 rounded-lg border border-gray-200 min-h-[100px] text-gray-800 text-lg">
+                No food detected yet.
+            </div>
+        </div>
+
+        <div id="customMessageBox" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+                <p id="messageContent" class="text-gray-700 mb-4 text-lg"></p>
+                <button id="closeMessageButton" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-5 rounded-lg">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const webcam = document.getElementById('webcam');
+        const detectionCanvas = document.getElementById('detectionCanvas');
+        const ctx = detectionCanvas.getContext('2d');
+        const startCameraButton = document.getElementById('startCameraButton');
+        const stopCameraButton = document.getElementById('stopCameraButton');
+        const foodListDiv = document.getElementById('foodList');
+        const loadingMessage = document.getElementById('loadingMessage');
+        const noCameraMessage = document.getElementById('noCameraMessage');
+        const customMessageBox = document.getElementById('customMessageBox');
+        const messageContent = document.getElementById('messageContent');
+        const closeMessageButton = document.getElementById('closeMessageButton');
+
+        let model = null;
+        let animationFrameId = null;
+        let stream = null;
+
+        // List of COCO-SSD classes that can be considered food or food-related
+        // This is a curated list. A more sophisticated app might use a dedicated food classification model.
+        const foodRelatedClasses = new Set([
+            'apple', 'banana', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza',
+            'donut', 'cake', 'sandwich', 'bowl', 'cup', 'fork', 'knife', 'spoon',
+            'bottle', // Could be a drink bottle
+            'wine glass', 'cup', 'dining table', 'vase', 'plate', // Contextual items
+            'bread', 'grape', 'lemon', 'ice cream', 'hamburger', 'pear', 'sushi',
+            'cookie', 'fries', 'mug', 'pie', 'strawberry', 'waffle', 'melon', 'shrimp'
+        ]);
+
+        /**
+         * Displays a custom message box instead of browser's alert.
+         * @param {string} message - The message to display.
+         */
+        function showMessageBox(message) {
+            messageContent.textContent = message;
+            customMessageBox.classList.remove('hidden');
+        }
+
+        closeMessageButton.addEventListener('click', () => {
+            customMessageBox.classList.add('hidden');
+        });
+
+        /**
+         * Initializes the webcam and starts the detection process.
+         */
+        async function initCamera() {
+            // Show loading message for model and camera
+            loadingMessage.classList.remove('hidden');
+            noCameraMessage.classList.add('hidden');
+            foodListDiv.textContent = 'Initializing camera and loading AI model...';
+
+            try {
+                // Check if COCO-SSD model is already loaded
+                if (!model) {
+                    console.log('Loading COCO-SSD model...');
+                    model = await cocoSsd.load();
+                    console.log('COCO-SSD model loaded.');
+                }
+
+                // Request camera access
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment' // Prefer rear camera on mobile
+                    }
+                });
+                webcam.srcObject = stream;
+
+                // When video metadata is loaded, set canvas dimensions
+                webcam.onloadedmetadata = () => {
+                    detectionCanvas.width = webcam.videoWidth;
+                    detectionCanvas.height = webcam.videoHeight;
+                    // Adjust container size to match video aspect ratio while maintaining max width
+                    const aspectRatio = webcam.videoHeight / webcam.videoWidth;
+                    document.querySelector('.video-container').style.paddingBottom = `${aspectRatio * 100}%`;
+                    document.querySelector('.video-container').style.height = '0'; // Important for aspect ratio trick
+                    console.log('Webcam dimensions:', webcam.videoWidth, 'x', webcam.videoHeight);
+                    webcam.play(); // Ensure video plays
+                    loadingMessage.classList.add('hidden'); // Hide loading message
+                    foodListDiv.textContent = 'Camera ready. Detecting food...';
+                    detectFrame(); // Start detection loop
+                    startCameraButton.disabled = true;
+                    stopCameraButton.disabled = false;
+                };
+
+            } catch (error) {
+                console.error('Error accessing camera or loading model:', error);
+                loadingMessage.classList.add('hidden');
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    noCameraMessage.classList.remove('hidden');
+                    foodListDiv.textContent = 'Camera access denied. Please enable it in browser settings.';
+                } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                    noCameraMessage.classList.remove('hidden');
+                    messageContent.textContent = 'No camera found on this device.';
+                } else {
+                    showMessageBox(`Failed to start camera or load AI model: ${error.message}. Please check console for details.`);
+                    foodListDiv.textContent = 'Error initializing camera or model. See message box.';
+                }
+                stopCamera(); // Ensure everything is stopped on error
+            }
+        }
+
+        /**
+         * Continuously detects objects in the video stream and draws them on the canvas.
+         */
+        async function detectFrame() {
+            if (model && webcam.srcObject && webcam.readyState === 4) {
+                // If the video is ready (readyState === 4 means have enough data to play)
+                const predictions = await model.detect(webcam);
+                drawDetections(predictions);
+                updateFoodList(predictions);
+            }
+            animationFrameId = requestAnimationFrame(detectFrame); // Continue the loop
+        }
+
+        /**
+         * Draws bounding boxes and labels on the canvas for detected objects.
+         * @param {Array} predictions - Array of detection predictions from the model.
+         */
+        function drawDetections(predictions) {
+            ctx.clearRect(0, 0, detectionCanvas.width, detectionCanvas.height);
+            ctx.font = '24px Inter';
+            ctx.textBaseline = 'top';
+
+            predictions.forEach(prediction => {
+                const [x, y, width, height] = prediction.bbox;
+
+                // Only draw if it's a food-related item or if we want to show all detections
+                if (foodRelatedClasses.has(prediction.class)) {
+                    ctx.strokeStyle = '#00FF00'; // Green for food
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(x, y, width, height);
+
+                    ctx.fillStyle = '#00FF00';
+                    const textWidth = ctx.measureText(prediction.class).width;
+                    const textHeight = parseInt(ctx.font, 10); // Get actual font height
+                    ctx.fillRect(x, y, textWidth + 10, textHeight + 10);
+
+                    ctx.fillStyle = '#000000'; // Black text on green background
+                    ctx.fillText(prediction.class, x + 5, y + 5);
+                }
+            });
+        }
+
+        /**
+         * Updates the list of detected food items in the UI.
+         * @param {Array} predictions - Array of detection predictions.
+         */
+        function updateFoodList(predictions) {
+            const detectedFood = new Set();
+            predictions.forEach(prediction => {
+                if (foodRelatedClasses.has(prediction.class) && prediction.score > 0.5) { // Confidence threshold
+                    detectedFood.add(prediction.class);
+                }
+            });
+
+            if (detectedFood.size > 0) {
+                foodListDiv.innerHTML = Array.from(detectedFood).map(item => `
+                    <span class="inline-block bg-green-200 text-green-800 text-sm font-medium mr-2 mb-2 px-3 py-1 rounded-full shadow-sm">
+                        ${item.charAt(0).toUpperCase() + item.slice(1)}
+                    </span>
+                `).join('');
+            } else {
+                foodListDiv.textContent = 'No food detected yet.';
+            }
+        }
+
+        /**
+         * Stops the webcam stream and resets the UI.
+         */
+        function stopCamera() {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                webcam.srcObject = null;
+            }
+            ctx.clearRect(0, 0, detectionCanvas.width, detectionCanvas.height); // Clear canvas
+            foodListDiv.textContent = 'Camera stopped.';
+            startCameraButton.disabled = false;
+            stopCameraButton.disabled = true;
+            loadingMessage.classList.add('hidden');
+            noCameraMessage.classList.add('hidden');
+            // Reset video container padding
+            document.querySelector('.video-container').style.paddingBottom = `0`;
+            document.querySelector('.video-container').style.height = 'auto';
+        }
+
+        // Event Listeners
+        startCameraButton.addEventListener('click', initCamera);
+        stopCameraButton.addEventListener('click', stopCamera);
+
+        // Initialize state on window load, but don't start camera automatically
+        window.onload = () => {
+            stopCameraButton.disabled = true; // Ensure stop button is disabled initially
+            // Pre-load model on page load to speed up camera start
+            loadingMessage.classList.remove('hidden');
+            foodListDiv.textContent = 'Loading AI model...';
+            cocoSsd.load().then(loadedModel => {
+                model = loadedModel;
+                console.log('Initial COCO-SSD model loaded successfully.');
+                loadingMessage.classList.add('hidden');
+                foodListDiv.textContent = 'AI model ready. Click "Start Camera" to begin.';
+            }).catch(error => {
+                console.error('Failed to pre-load COCO-SSD model:', error);
+                loadingMessage.classList.add('hidden');
+                showMessageBox('Failed to load the AI model. Please try again or check your internet connection.');
+                foodListDiv.textContent = 'Error loading AI model.';
+            });
+        };
+    </script>
+</body>
+</html>
