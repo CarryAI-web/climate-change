@@ -3,220 +3,321 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rich Picture: The Urchin Barrens Trophic Cascade</title>
+    <title>Image Detection App</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-        }
-        .flow-arrow {
-            width: 2px;
-            background-color: #FF851B; /* Orange for flow */
-            height: 40px;
-            margin: 0 auto;
-        }
-        .flow-arrow::after {
-            content: ' ';
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            margin-left: -6px;
-            border-width: 6px;
-            border-style: solid;
-            border-color: #FF851B transparent transparent transparent;
-        }
-        /* Modal Styles */
-        .modal {
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 100; /* Sit on top */
-            left: 0;
-            top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            background-color: #f0f2f5;
+            display: flex;
             justify-content: center;
             align-items: center;
-        }
-        .modal-content {
-            background-color: #fefefe;
-            margin: auto;
+            min-height: 100vh;
+            margin: 0;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            width: 80%;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
             max-width: 600px;
-            position: relative;
+            text-align: center;
         }
-        .close-button {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
+        video, canvas {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+            border-radius: 12px;
+            background-color: #e2e8f0;
+            object-fit: cover;
+            margin-bottom: 20px;
+            border: 2px solid #cbd5e1;
         }
-        .close-button:hover,
-        .close-button:focus {
-            color: black;
-            text-decoration: none;
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
             cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        button.primary {
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+        }
+        button.primary:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+        }
+        button.secondary {
+            background-color: #e0e7ff;
+            color: #4f46e5;
+            border: 2px solid #4f46e5;
+        }
+        button.secondary:hover {
+            background-color: #c7d2fe;
+            transform: translateY(-2px);
+        }
+        .message-box {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: left;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #475569;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .message-box.loading {
+            color: #6366f1;
+            font-style: italic;
+        }
+        .error-message {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+        /* Spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #4f46e5;
+            animation: spin 1s ease infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            .button-group {
+                flex-direction: column;
+            }
+            button {
+                width: 100%;
+            }
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-300 to-blue-500 min-h-screen text-gray-800 flex items-center justify-center py-12 px-4">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+    <div class="container">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Image Detector</h1>
 
-    <div class="bg-white rounded-xl shadow-2xl p-8 max-w-5xl w-full">
-        <header class="text-center mb-10">
-            <h1 class="text-4xl md:text-5xl font-extrabold text-[#0074D9] mb-4">Rich Picture: The Urchin Barrens Trophic Cascade</h1>
-            <p class="text-lg text-gray-600 max-w-3xl mx-auto">This visualization illustrates how interconnected ecological factors, exacerbated by climate change, can lead to the dramatic transformation of thriving kelp forests into barren underwater landscapes.</p>
-        </header>
+        <video id="cameraFeed" autoplay class="rounded-xl shadow-md hidden"></video>
+        <canvas id="capturedImage" class="rounded-xl shadow-md hidden"></canvas>
+        <img id="displayImage" class="rounded-xl shadow-md hidden mb-4 mx-auto" alt="Captured Image" style="max-width: 100%; height: auto;">
 
-        <div class="flex flex-col items-center space-y-8">
-
-            <!-- Step 1: Climate Stress & Disease -->
-            <div class="relative bg-[#FF4136] text-white p-6 rounded-lg shadow-xl w-full max-w-md text-center border-2 border-red-600">
-                <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#FF4136] px-4 py-1 rounded-full text-sm font-semibold shadow-md">Step 1</div>
-                <div class="text-6xl mb-4">🌡️🦠</div>
-                <h3 class="text-2xl font-bold mb-2">Climate Stress & Disease</h3>
-                <p class="text-sm">Marine heatwaves and environmental changes weaken ecosystems, making them vulnerable to diseases. For example, sea stars, key predators, suffer massive die-offs from sea star wasting disease.</p>
-                <button data-step="climateStress" class="learn-more-btn mt-4 bg-red-800 text-white py-2 px-4 rounded-full shadow-md hover:bg-red-900 transition-colors">✨ Learn More ✨</button>
-                <div class="absolute -bottom-8 left-1/2 -translate-x-1/2 flow-arrow"></div>
-            </div>
-
-            <!-- Step 2: Predator Loss -->
-            <div class="relative bg-[#FF851B] text-white p-6 rounded-lg shadow-xl w-full max-w-md text-center border-2 border-orange-600">
-                <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#FF851B] px-4 py-1 rounded-full text-sm font-semibold shadow-md">Step 2</div>
-                <div class="text-6xl mb-4">🦀🦞</div>
-                <h3 class="text-2xl font-bold mb-2">Predator Loss</h3>
-                <p class="text-sm">With the decline of sea stars and other natural predators (like lobsters and California sheephead) due to disease or overfishing, the ecological balance is disrupted.</p>
-                <button data-step="predatorLoss" class="learn-more-btn mt-4 bg-orange-800 text-white py-2 px-4 rounded-full shadow-md hover:bg-orange-900 transition-colors">✨ Learn More ✨</button>
-                 <div class="absolute -bottom-8 left-1/2 -translate-x-1/2 flow-arrow"></div>
-            </div>
-
-            <!-- Step 3: Urchin Population Boom -->
-            <div class="relative bg-[#800080] text-white p-6 rounded-lg shadow-xl w-full max-w-md text-center border-2 border-purple-600">
-                <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#800080] px-4 py-1 rounded-full text-sm font-semibold shadow-md">Step 3</div>
-                <div class="text-6xl mb-4">💜💜💜</div>
-                <h3 class="text-2xl font-bold mb-2">Urchin Population Boom</h3>
-                <p class="text-sm">Without predators to keep them in check, voracious grazers like purple sea urchins multiply unchecked, forming dense aggregations that consume everything in their path.</p>
-                <button data-step="urchinBoom" class="learn-more-btn mt-4 bg-purple-800 text-white py-2 px-4 rounded-full shadow-md hover:bg-purple-900 transition-colors">✨ Learn More ✨</button>
-                 <div class="absolute -bottom-8 left-1/2 -translate-x-1/2 flow-arrow"></div>
-            </div>
-
-            <!-- Step 4: Urchin Barren Forms -->
-            <div class="relative bg-gray-700 text-white p-6 rounded-lg shadow-xl w-full max-w-md text-center border-2 border-gray-900">
-                <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-700 px-4 py-1 rounded-full text-sm font-semibold shadow-md">Step 4</div>
-                <div class="text-6xl mb-4">💀🌿</div>
-                <h3 class="text-2xl font-bold mb-2">Urchin Barren Forms</h3>
-                <p class="text-sm">The unchecked urchin populations overgraze the kelp forests, devastating the ecosystem and transforming lush, productive habitats into barren, rocky seafloors, severely impacting biodiversity.</p>
-                <button data-step="urchinBarren" class="learn-more-btn mt-4 bg-gray-800 text-white py-2 px-4 rounded-full shadow-md hover:bg-gray-900 transition-colors">✨ Learn More ✨</button>
-            </div>
-
+        <div class="button-group">
+            <button id="startCameraButton" class="primary">Start Camera</button>
+            <button id="captureButton" class="secondary" disabled>Capture Image</button>
+            <button id="detectButton" class="primary" disabled>Detect Objects</button>
         </div>
 
-        <footer class="text-center mt-12 text-gray-600 text-sm">
-            <p>This rich picture highlights the cascading impacts within marine ecosystems.</p>
-            <p>Understanding these connections is vital for effective conservation and climate action.</p>
-        </footer>
-    </div>
-
-    <!-- The Modal -->
-    <div id="responseModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3 id="modalTitle" class="text-xl font-bold mb-4 text-[#0074D9]"></h3>
-            <p id="modalContent" class="text-gray-700"></p>
-            <div id="modalLoading" class="text-center text-gray-500 mt-4 hidden">Loading...</div>
+        <div id="responseBox" class="message-box">
+            Click 'Start Camera' to begin!
         </div>
+        <p id="errorMessage" class="error-message"></p>
     </div>
 
     <script>
-        const modal = document.getElementById('responseModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalContent = document.getElementById('modalContent');
-        const modalLoading = document.getElementById('modalLoading');
-        const closeButton = document.getElementsByClassName('close-button')[0];
+        const cameraFeed = document.getElementById('cameraFeed');
+        const capturedImageCanvas = document.getElementById('capturedImage');
+        const displayImage = document.getElementById('displayImage');
+        const startCameraButton = document.getElementById('startCameraButton');
+        const captureButton = document.getElementById('captureButton');
+        const detectButton = document.getElementById('detectButton');
+        const responseBox = document.getElementById('responseBox');
+        const errorMessageDisplay = document.getElementById('errorMessage');
+        const ctx = capturedImageCanvas.getContext('2d');
 
-        // Close modal when 'x' is clicked
-        closeButton.onclick = function() {
-            modal.style.display = 'none';
+        let stream = null;
+        let base64ImageData = null;
+
+        // IMPORTANT: Replace 'YOUR_OPENROUTER_API_KEY' with your actual OpenRouter API key.
+        // You can get one from your OpenRouter dashboard.
+        const OPENROUTER_API_KEY = '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';
+        const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+        const OPENROUTER_MODEL = 'google/gemma-3-27b-it:free'; // Using Gemma 2 7B as Gemma 3 27B might not be readily available or might require specific access. Adjust as needed.
+
+
+        /**
+         * Displays a message in the response box.
+         * @param {string} message - The message to display.
+         * @param {boolean} isLoading - True if a loading spinner should be shown.
+         */
+        function displayMessage(message, isLoading = false) {
+            responseBox.innerHTML = isLoading ? `<div class="spinner"></div><p class="mt-2">${message}</p>` : `<p>${message}</p>`;
+            responseBox.classList.toggle('loading', isLoading);
+            errorMessageDisplay.textContent = ''; // Clear previous errors
         }
 
-        // Close modal when clicking outside of it
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = 'none';
+        /**
+         * Displays an error message.
+         * @param {string} message - The error message to display.
+         */
+        function displayError(message) {
+            errorMessageDisplay.textContent = `Error: ${message}`;
+            responseBox.innerHTML = '<p>An error occurred.</p>';
+            responseBox.classList.remove('loading');
+        }
+
+        /**
+         * Starts the camera feed.
+         */
+        startCameraButton.addEventListener('click', async () => {
+            displayMessage('Starting camera...');
+            try {
+                // Request access to the user's camera
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); // Prefer rear camera
+                cameraFeed.srcObject = stream;
+                cameraFeed.classList.remove('hidden');
+                displayImage.classList.add('hidden'); // Hide previously captured image
+                capturedImageCanvas.classList.add('hidden'); // Hide canvas
+
+                // Once the video metadata is loaded, make sure the video is playing
+                cameraFeed.onloadedmetadata = () => {
+                    cameraFeed.play();
+                    captureButton.disabled = false;
+                    detectButton.disabled = true; // Disable detect until image is captured
+                    startCameraButton.disabled = true;
+                    displayMessage('Camera active. Click "Capture Image" to take a photo.');
+                };
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                displayError('Could not access camera. Please ensure camera permissions are granted.');
+                captureButton.disabled = true;
+                detectButton.disabled = true;
+                startCameraButton.disabled = false;
             }
-        }
+        });
 
-        async function callGeminiAPI(prompt, title) {
-            modal.style.display = 'flex';
-            modalTitle.textContent = title;
-            modalContent.textContent = '';
-            modalLoading.classList.remove('hidden');
+        /**
+         * Captures an image from the video feed and displays it.
+         */
+        captureButton.addEventListener('click', () => {
+            if (stream) {
+                // Set canvas dimensions to match video feed
+                capturedImageCanvas.width = cameraFeed.videoWidth;
+                capturedImageCanvas.height = cameraFeed.videoHeight;
+                ctx.drawImage(cameraFeed, 0, 0, capturedImageCanvas.width, capturedImageCanvas.height);
+
+                // Stop camera stream after capturing
+                stream.getTracks().forEach(track => track.stop());
+                cameraFeed.srcObject = null;
+                cameraFeed.classList.add('hidden'); // Hide camera feed
+
+                // Display the captured image
+                base64ImageData = capturedImageCanvas.toDataURL('image/png').split(',')[1]; // Get base64 data without prefix
+                displayImage.src = 'data:image/png;base64,' + base64ImageData;
+                displayImage.classList.remove('hidden');
+
+                captureButton.disabled = true;
+                detectButton.disabled = false; // Enable detect button
+                startCameraButton.disabled = false; // Allow restarting camera
+                displayMessage('Image captured! Click "Detect Objects" to analyze.');
+            } else {
+                displayError('No camera stream active.');
+            }
+        });
+
+        /**
+         * Sends the captured image to the AI model for detection via OpenRouter.
+         */
+        detectButton.addEventListener('click', async () => {
+            if (!base64ImageData) {
+                displayError('No image captured to detect.');
+                return;
+            }
+
+            displayMessage('Analyzing image...', true);
+            detectButton.disabled = true; // Disable button during detection
 
             try {
-                let chatHistory = [];
-                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-                const payload = { contents: chatHistory };
-                const apiKey = "";
-                const apiUrl = `https://gemini.mail2you.net/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                const response = await fetch(apiUrl, {
+                // The prompt for the AI model
+                const prompt = "What is in this image? Provide a concise description of the main objects and their context.";
+
+                // OpenRouter chat completions API expects messages in a specific format
+                const messages = [
+                    {
+                        role: "user",
+                        content: [
+                            { type: "text", text: prompt },
+                            { type: "image_url", image_url: { url: `data:image/png;base64,${base64ImageData}` } }
+                        ]
+                    }
+                ];
+
+                const payload = {
+                    model: OPENROUTER_MODEL,
+                    messages: messages,
+                };
+
+                const response = await fetch(OPENROUTER_API_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${OPENROUTER_API_KEY}` // Use bearer token for OpenRouter
+                    },
                     body: JSON.stringify(payload)
                 });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error.message || 'Unknown error'}`);
+                }
+
                 const result = await response.json();
 
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const text = result.candidates[0].content.parts[0].text;
-                    modalContent.textContent = text;
+                // OpenRouter response structure for chat completions
+                if (result.choices && result.choices.length > 0 && result.choices[0].message && result.choices[0].message.content) {
+                    const text = result.choices[0].message.content;
+                    displayMessage(text);
                 } else {
-                    modalContent.textContent = "Sorry, I couldn't generate a response. Please try again.";
+                    displayError('AI response format unexpected or content missing.');
+                    console.warn('Unexpected AI response:', result);
                 }
             } catch (error) {
-                console.error('Error calling Gemini API:', error);
-                modalContent.textContent = "An error occurred while fetching the response. Please check the console.";
+                console.error('Error detecting objects:', error);
+                displayError(`Failed to detect objects: ${error.message}`);
             } finally {
-                modalLoading.classList.add('hidden');
+                detectButton.disabled = false; // Re-enable detect button
             }
-        }
-
-        document.querySelectorAll('.learn-more-btn').forEach(button => {
-            button.addEventListener('click', (event) => {
-                const step = event.target.dataset.step;
-                let prompt = '';
-                let title = '';
-
-                switch (step) {
-                    case 'climateStress':
-                        title = '✨ Climate Stress & Disease Explained ✨';
-                        prompt = 'Explain in detail how marine heatwaves and climate stress can lead to increased disease susceptibility and die-offs in key marine species like sea stars, impacting ecosystems.';
-                        break;
-                    case 'predatorLoss':
-                        title = '✨ Predator Loss Explained ✨';
-                        prompt = 'Elaborate on how the decline of key predators (e.g., sea stars, lobsters, California sheephead) due to disease or other environmental factors affects the balance of marine ecosystems, specifically in kelp forests.';
-                        break;
-                    case 'urchinBoom':
-                        title = '✨ Urchin Population Boom Explained ✨';
-                        prompt = 'Describe why the population of grazers like purple sea urchins can explode when their natural predators are removed or significantly reduced, and what impact this has initially on their environment.';
-                        break;
-                    case 'urchinBarren':
-                        title = '✨ Urchin Barren Forms Explained ✨';
-                        prompt = 'Explain the final stage of the trophic cascade, where unchecked sea urchin populations overgraze kelp forests, leading to "urchin barrens" and the complete devastation of the underwater ecosystem.';
-                        break;
-                    default:
-                        title = 'Information';
-                        prompt = 'No specific information available for this step.';
-                }
-                callGeminiAPI(prompt, title);
-            });
         });
+
+        // Initialize display
+        window.onload = () => {
+            displayMessage('Click \'Start Camera\' to begin!');
+            cameraFeed.classList.add('hidden'); // Ensure camera feed is hidden initially
+            capturedImageCanvas.classList.add('hidden'); // Ensure canvas is hidden initially
+            displayImage.classList.add('hidden'); // Ensure image display is hidden initially
+        };
+
     </script>
 </body>
 </html>
