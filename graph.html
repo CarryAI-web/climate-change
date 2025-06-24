@@ -28,6 +28,42 @@
             border-style: solid;
             border-color: #FF851B transparent transparent transparent;
         }
+        /* Modal Styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 100; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+        }
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-300 to-blue-500 min-h-screen text-gray-800 flex items-center justify-center py-12 px-4">
@@ -46,6 +82,7 @@
                 <div class="text-6xl mb-4">🌡️🦠</div>
                 <h3 class="text-2xl font-bold mb-2">Climate Stress & Disease</h3>
                 <p class="text-sm">Marine heatwaves and environmental changes weaken ecosystems, making them vulnerable to diseases. For example, sea stars, key predators, suffer massive die-offs from sea star wasting disease.</p>
+                <button data-step="climateStress" class="learn-more-btn mt-4 bg-red-800 text-white py-2 px-4 rounded-full shadow-md hover:bg-red-900 transition-colors">✨ Learn More ✨</button>
                 <div class="absolute -bottom-8 left-1/2 -translate-x-1/2 flow-arrow"></div>
             </div>
 
@@ -55,6 +92,7 @@
                 <div class="text-6xl mb-4">🦀🦞</div>
                 <h3 class="text-2xl font-bold mb-2">Predator Loss</h3>
                 <p class="text-sm">With the decline of sea stars and other natural predators (like lobsters and California sheephead) due to disease or overfishing, the ecological balance is disrupted.</p>
+                <button data-step="predatorLoss" class="learn-more-btn mt-4 bg-orange-800 text-white py-2 px-4 rounded-full shadow-md hover:bg-orange-900 transition-colors">✨ Learn More ✨</button>
                  <div class="absolute -bottom-8 left-1/2 -translate-x-1/2 flow-arrow"></div>
             </div>
 
@@ -64,6 +102,7 @@
                 <div class="text-6xl mb-4">💜💜💜</div>
                 <h3 class="text-2xl font-bold mb-2">Urchin Population Boom</h3>
                 <p class="text-sm">Without predators to keep them in check, voracious grazers like purple sea urchins multiply unchecked, forming dense aggregations that consume everything in their path.</p>
+                <button data-step="urchinBoom" class="learn-more-btn mt-4 bg-purple-800 text-white py-2 px-4 rounded-full shadow-md hover:bg-purple-900 transition-colors">✨ Learn More ✨</button>
                  <div class="absolute -bottom-8 left-1/2 -translate-x-1/2 flow-arrow"></div>
             </div>
 
@@ -73,6 +112,7 @@
                 <div class="text-6xl mb-4">💀🌿</div>
                 <h3 class="text-2xl font-bold mb-2">Urchin Barren Forms</h3>
                 <p class="text-sm">The unchecked urchin populations overgraze the kelp forests, devastating the ecosystem and transforming lush, productive habitats into barren, rocky seafloors, severely impacting biodiversity.</p>
+                <button data-step="urchinBarren" class="learn-more-btn mt-4 bg-gray-800 text-white py-2 px-4 rounded-full shadow-md hover:bg-gray-900 transition-colors">✨ Learn More ✨</button>
             </div>
 
         </div>
@@ -83,5 +123,100 @@
         </footer>
     </div>
 
+    <!-- The Modal -->
+    <div id="responseModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 id="modalTitle" class="text-xl font-bold mb-4 text-[#0074D9]"></h3>
+            <p id="modalContent" class="text-gray-700"></p>
+            <div id="modalLoading" class="text-center text-gray-500 mt-4 hidden">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('responseModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalContent = document.getElementById('modalContent');
+        const modalLoading = document.getElementById('modalLoading');
+        const closeButton = document.getElementsByClassName('close-button')[0];
+
+        // Close modal when 'x' is clicked
+        closeButton.onclick = function() {
+            modal.style.display = 'none';
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        async function callGeminiAPI(prompt, title) {
+            modal.style.display = 'flex';
+            modalTitle.textContent = title;
+            modalContent.textContent = '';
+            modalLoading.classList.remove('hidden');
+
+            try {
+                let chatHistory = [];
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+                const payload = { contents: chatHistory };
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    modalContent.textContent = text;
+                } else {
+                    modalContent.textContent = "Sorry, I couldn't generate a response. Please try again.";
+                }
+            } catch (error) {
+                console.error('Error calling Gemini API:', error);
+                modalContent.textContent = "An error occurred while fetching the response. Please check the console.";
+            } finally {
+                modalLoading.classList.add('hidden');
+            }
+        }
+
+        document.querySelectorAll('.learn-more-btn').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const step = event.target.dataset.step;
+                let prompt = '';
+                let title = '';
+
+                switch (step) {
+                    case 'climateStress':
+                        title = '✨ Climate Stress & Disease Explained ✨';
+                        prompt = 'Explain in detail how marine heatwaves and climate stress can lead to increased disease susceptibility and die-offs in key marine species like sea stars, impacting ecosystems.';
+                        break;
+                    case 'predatorLoss':
+                        title = '✨ Predator Loss Explained ✨';
+                        prompt = 'Elaborate on how the decline of key predators (e.g., sea stars, lobsters, California sheephead) due to disease or other environmental factors affects the balance of marine ecosystems, specifically in kelp forests.';
+                        break;
+                    case 'urchinBoom':
+                        title = '✨ Urchin Population Boom Explained ✨';
+                        prompt = 'Describe why the population of grazers like purple sea urchins can explode when their natural predators are removed or significantly reduced, and what impact this has initially on their environment.';
+                        break;
+                    case 'urchinBarren':
+                        title = '✨ Urchin Barren Forms Explained ✨';
+                        prompt = 'Explain the final stage of the trophic cascade, where unchecked sea urchin populations overgraze kelp forests, leading to "urchin barrens" and the complete devastation of the underwater ecosystem.';
+                        break;
+                    default:
+                        title = 'Information';
+                        prompt = 'No specific information available for this step.';
+                }
+                callGeminiAPI(prompt, title);
+            });
+        });
+    </script>
 </body>
 </html>
