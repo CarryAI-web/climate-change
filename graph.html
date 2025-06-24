@@ -160,10 +160,17 @@
         let base64ImageData = null;
 
         // IMPORTANT: Replace 'YOUR_OPENROUTER_API_KEY' with your actual OpenRouter API key.
-        // You can get one from your OpenRouter dashboard.
-        const OPENROUTER_API_KEY = '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';
+        // You can get one from your OpenRouter dashboard: https://openrouter.ai/keys
+        // This key is essential for authenticating with the OpenRouter API.
+        //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
+        const OPENROUTER_API_KEY = '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';
         const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-        const OPENROUTER_MODEL = 'google/gemma-3-27b-it:free'; // Using Gemma 2 7B as Gemma 3 27B might not be readily available or might require specific access. Adjust as needed.
+        // OpenRouter model for image detection.
+        // Note: Not all models support multimodal input (text + image).
+        // 'google/gemma-2-7b-it' is primarily a text model.
+        // For vision tasks, you might need a dedicated multimodal model if available on OpenRouter.
+        // Refer to OpenRouter's model list for compatible vision models: https://openrouter.ai/docs#models
+        const OPENROUTER_MODEL = 'google/gemma-3-27b-it:free'; // Using Gemma 2 7B. If Gemma 3 27B vision model is available and supported, update this.
 
 
         /**
@@ -255,6 +262,11 @@
                 return;
             }
 
+            if (OPENROUTER_API_KEY === 'YOUR_OPENROUTER_API_KEY') {
+                displayError('Please replace "YOUR_OPENROUTER_API_KEY" with your actual API key from OpenRouter.ai');
+                return;
+            }
+
             displayMessage('Analyzing image...', true);
             detectButton.disabled = true; // Disable button during detection
 
@@ -263,6 +275,7 @@
                 const prompt = "What is in this image? Provide a concise description of the main objects and their context.";
 
                 // OpenRouter chat completions API expects messages in a specific format
+                // For multimodal input, the 'content' can be an array of text and image_url objects.
                 const messages = [
                     {
                         role: "user",
@@ -276,6 +289,9 @@
                 const payload = {
                     model: OPENROUTER_MODEL,
                     messages: messages,
+                    // Optional: You can add other parameters like temperature, max_tokens etc.
+                    // temperature: 0.7,
+                    // max_tokens: 150,
                 };
 
                 const response = await fetch(OPENROUTER_API_URL, {
@@ -289,7 +305,8 @@
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error.message || 'Unknown error'}`);
+                    console.error('OpenRouter API Error Response:', errorData); // Log the full error response
+                    throw new Error(`API error: ${response.status} ${response.statusText} - ${errorData.error?.message || errorData.message || 'Unknown error'}`);
                 }
 
                 const result = await response.json();
